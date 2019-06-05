@@ -29,6 +29,7 @@ export function pureFinalPropsSelectorFactory(
   let dispatchProps
   let mergedProps
 
+  //定义第一次执行数据比较的方法，也就是简单的赋值给上面定义的闭包变量
   function handleFirstCall(firstState, firstOwnProps) {
     state = firstState
     ownProps = firstOwnProps
@@ -39,6 +40,7 @@ export function pureFinalPropsSelectorFactory(
     return mergedProps
   }
 
+  //当state和props都有变动时的处理方法
   function handleNewPropsAndNewState() {
     stateProps = mapStateToProps(state, ownProps)
 
@@ -49,6 +51,7 @@ export function pureFinalPropsSelectorFactory(
     return mergedProps
   }
 
+  //如果state无变化，props变化
   function handleNewProps() {
     if (mapStateToProps.dependsOnOwnProps)
       stateProps = mapStateToProps(state, ownProps)
@@ -60,6 +63,7 @@ export function pureFinalPropsSelectorFactory(
     return mergedProps
   }
 
+  //如果state变化，props无变化
   function handleNewState() {
     const nextStateProps = mapStateToProps(state, ownProps)
     const statePropsChanged = !areStatePropsEqual(nextStateProps, stateProps)
@@ -101,6 +105,7 @@ export default function finalPropsSelectorFactory(
   dispatch,
   { initMapStateToProps, initMapDispatchToProps, initMergeProps, ...options }
 ) {
+  //initMapStateToProps,initMapDispatchToProps 等式从connect.js中传入的 match函数执行结果，返回结果为函数
   const mapStateToProps = initMapStateToProps(dispatch, options)
   const mapDispatchToProps = initMapDispatchToProps(dispatch, options)
   const mergeProps = initMergeProps(dispatch, options)
@@ -114,7 +119,7 @@ export default function finalPropsSelectorFactory(
     )
   }
 
-  const selectorFactory = options.pure
+  const selectorFactory = options.pure //是否是纯净组件，默认是true 执行 pureFinalPropsSelectorFactory
     ? pureFinalPropsSelectorFactory
     : impureFinalPropsSelectorFactory
 

@@ -1,4 +1,5 @@
 import connectAdvanced from '../components/connectAdvanced'
+//浅比较对象 是否相等
 import shallowEqual from '../utils/shallowEqual'
 import defaultMapDispatchToPropsFactories from './mapDispatchToProps'
 import defaultMapStateToPropsFactories from './mapStateToProps'
@@ -22,6 +23,7 @@ import defaultSelectorFactory from './selectorFactory'
   it receives new props or store state.
  */
 
+//返回匹配 factories 中的函数 (dispatch, options) => () 
 function match(arg, factories, name) {
   for (let i = factories.length - 1; i >= 0; i--) {
     const result = factories[i](arg)
@@ -31,7 +33,7 @@ function match(arg, factories, name) {
   return (dispatch, options) => {
     throw new Error(
       `Invalid value of type ${typeof arg} for ${name} argument when connecting component ${
-        options.wrappedComponentName
+      options.wrappedComponentName
       }.`
     )
   }
@@ -43,6 +45,10 @@ function strictEqual(a, b) {
 
 // createConnect with default args builds the 'official' connect behavior. Calling it with
 // different options opens up some testing and extensibility scenarios
+/**
+ *  connect的参数connect([mapStateToProps], [mapDispatchToProps], [mergeProps], [options])
+ *  连接 React 组件与 Redux store 
+ */
 export function createConnect({
   connectHOC = connectAdvanced,
   mapStateToPropsFactories = defaultMapStateToPropsFactories,
@@ -74,7 +80,7 @@ export function createConnect({
       'mapDispatchToProps'
     )
     const initMergeProps = match(mergeProps, mergePropsFactories, 'mergeProps')
-
+    // 返回connectAdvanced
     return connectHOC(selectorFactory, {
       // used in error messages
       methodName: 'connect',
@@ -83,6 +89,7 @@ export function createConnect({
       getDisplayName: name => `Connect(${name})`,
 
       // if mapStateToProps is falsy, the Connect component doesn't subscribe to store state changes
+      //mapStateToProps 为 undefined 则shouldHandleStateChanges为false不监听store state改变，不重新渲染
       shouldHandleStateChanges: Boolean(mapStateToProps),
 
       // passed through to selectorFactory

@@ -1,10 +1,13 @@
+//这个组件会自动把所有绑定在对象上的非React方法都绑定到新的对象上
 import hoistStatics from 'hoist-non-react-statics'
+//提示。类似console
 import invariant from 'invariant'
 import React, { Component, PureComponent } from 'react'
 import { isValidElementType, isContextConsumer } from 'react-is'
 
 import { ReactReduxContext } from './Context'
 
+//字符串序列化组件
 const stringifyComponent = Comp => {
   try {
     return JSON.stringify(Comp)
@@ -13,6 +16,7 @@ const stringifyComponent = Comp => {
   }
 }
 
+//将 React 组件连接到 Redux store 的函数
 export default function connectAdvanced(
   /*
     selectorFactory is a func that is responsible for returning the selector function used to
@@ -36,17 +40,21 @@ export default function connectAdvanced(
   {
     // the func used to compute this HOC's displayName from the wrapped component's displayName.
     // probably overridden by wrapper functions such as connect()
+    // 被包裹的组件的 DisplayName 属性
     getDisplayName = name => `ConnectAdvanced(${name})`,
 
     // shown in error messages
     // probably overridden by wrapper functions such as connect()
+    // 在错误信息里显示的方法名称
     methodName = 'connectAdvanced',
 
     // REMOVED: if defined, the name of the property passed to the wrapped element indicating the number of
     // calls to render. useful for watching in react devtools for unnecessary re-renders.
+    //被移除，表示render方法调用次数
     renderCountProp = undefined,
 
     // determines whether this HOC subscribes to store changes
+    // 组件是否订阅 redux store 的 state 更改，默认true
     shouldHandleStateChanges = true,
 
     // REMOVED: the key of props/context to get the store
@@ -65,11 +73,12 @@ export default function connectAdvanced(
     ...connectOptions
   } = {}
 ) {
+  //renderCountProp 被移除提示语
   invariant(
     renderCountProp === undefined,
     `renderCountProp is removed. render counting is built into the latest React dev tools profiling extension`
   )
-
+  //withRef 被移除提示语
   invariant(
     !withRef,
     'withRef is removed. To access the wrapped instance, use a ref on the connected component'
@@ -80,23 +89,24 @@ export default function connectAdvanced(
     "React.createContext(), and pass the context object to React Redux's Provider and specific components" +
     ' like: <Provider context={MyContext}><ConnectedComponent context={MyContext} /></Provider>. ' +
     'You may also pass a {context : MyContext} option to connect'
-
+  //storeKey 被移除提示语
   invariant(
     storeKey === 'store',
     'storeKey has been removed and does not do anything. ' +
-      customStoreWarningMessage
+    customStoreWarningMessage
   )
 
-  const Context = context
-
+  const Context = context //将ReactReduxContext 赋值给Context
+  //返回包裹组件的函数
   return function wrapWithConnect(WrappedComponent) {
+    //如果是开发环境 且被包裹组件是不有效的元素则提示
     if (process.env.NODE_ENV !== 'production') {
       invariant(
         isValidElementType(WrappedComponent),
         `You must pass a component to the function returned by ` +
-          `${methodName}. Instead received ${stringifyComponent(
-            WrappedComponent
-          )}`
+        `${methodName}. Instead received ${stringifyComponent(
+          WrappedComponent
+        )}`
       )
     }
 
@@ -117,7 +127,7 @@ export default function connectAdvanced(
       WrappedComponent
     }
 
-    const { pure } = connectOptions
+    const { pure } = connectOptions //pure 决定 shouldComponentUpdate是否比对
 
     let OuterBaseComponent = Component
 
@@ -138,17 +148,18 @@ export default function connectAdvanced(
         props,
         store,
         selectorFactoryOptions
-      ) {
+      ) {// 如果pure为true , props 和 state都没有变化时 返回lastDerivedProps
         if (pure && lastProps === props && lastState === state) {
           return lastDerivedProps
         }
-
+        //如果 store更新 或者 selectorFactoryOptions引用改变，则更新 lastStore 和 lastSelectorFactoryOptions
         if (
           store !== lastStore ||
           lastSelectorFactoryOptions !== selectorFactoryOptions
         ) {
           lastStore = store
           lastSelectorFactoryOptions = selectorFactoryOptions
+          //selectorFactory为connect传入的function
           sourceSelector = selectorFactory(
             store.dispatch,
             selectorFactoryOptions
@@ -157,7 +168,7 @@ export default function connectAdvanced(
 
         lastProps = props
         lastState = state
-
+        //合并 state ,props
         const nextProps = sourceSelector(state, props)
 
         lastDerivedProps = nextProps
@@ -173,7 +184,7 @@ export default function connectAdvanced(
         childProps,
         forwardRef
       ) {
-        if (
+        if ( //如果更新则赋值
           childProps !== lastChildProps ||
           forwardRef !== lastForwardRef ||
           lastComponent !== WrappedComponent
@@ -196,7 +207,7 @@ export default function connectAdvanced(
         invariant(
           forwardRef ? !props.wrapperProps[storeKey] : !props[storeKey],
           'Passing redux store in props has been removed and does not do anything. ' +
-            customStoreWarningMessage
+          customStoreWarningMessage
         )
         this.selectDerivedProps = makeDerivedPropsSelector()
         this.selectChildElement = makeChildElementSelector()
@@ -205,6 +216,7 @@ export default function connectAdvanced(
         )
       }
 
+      // value 是传入的 react context
       indirectRenderWrappedComponent(value) {
         // calling renderWrappedComponent on prototype from indirectRenderWrappedComponent bound to `this`
         return this.renderWrappedComponent(value)
@@ -214,10 +226,12 @@ export default function connectAdvanced(
         invariant(
           value,
           `Could not find "store" in the context of ` +
-            `"${displayName}". Either wrap the root component in a <Provider>, ` +
-            `or pass a custom React context provider to <Provider> and the corresponding ` +
-            `React context consumer to ${displayName} in connect options.`
+          `"${displayName}". Either wrap the root component in a <Provider>, ` +
+          `or pass a custom React context provider to <Provider> and the corresponding ` +
+          `React context consumer to ${displayName} in connect options.`
         )
+
+        // 从 Provider store={store} 中取出的 数据
         const { storeState, store } = value
 
         let wrapperProps = this.props
@@ -245,8 +259,8 @@ export default function connectAdvanced(
       render() {
         const ContextToUse =
           this.props.context &&
-          this.props.context.Consumer &&
-          isContextConsumer(<this.props.context.Consumer />)
+            this.props.context.Consumer &&
+            isContextConsumer(<this.props.context.Consumer />)
             ? this.props.context
             : Context
 
@@ -268,12 +282,12 @@ export default function connectAdvanced(
       ) {
         return <Connect wrapperProps={props} forwardedRef={ref} />
       })
-
+      // 此时connect()(<xx />)的生成组件为forwarded， 重新挂载displayName和WrappedComponent
       forwarded.displayName = displayName
       forwarded.WrappedComponent = WrappedComponent
       return hoistStatics(forwarded, WrappedComponent)
     }
-
+    // 将子组件的非React的static(静态)属性或方法合并到父组件
     return hoistStatics(Connect, WrappedComponent)
   }
 }

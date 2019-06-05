@@ -7,6 +7,7 @@ export function wrapMapToPropsConstant(getConstant) {
     function constantSelector() {
       return constant
     }
+    //dependsOnOwnProps : 当ownProps更新的时候，用来判断是否需要重新调用对应方法获取新的结果。
     constantSelector.dependsOnOwnProps = false
     return constantSelector
   }
@@ -19,11 +20,13 @@ export function wrapMapToPropsConstant(getConstant) {
 // A length of one signals that mapToProps does not depend on props from the parent component.
 // A length of zero is assumed to mean mapToProps is getting args via arguments or ...args and
 // therefore not reporting its length accurately..
+
+// 用来判断是否存在ownProps 
 export function getDependsOnOwnProps(mapToProps) {
   return mapToProps.dependsOnOwnProps !== null &&
     mapToProps.dependsOnOwnProps !== undefined
     ? Boolean(mapToProps.dependsOnOwnProps)
-    : mapToProps.length !== 1
+    : mapToProps.length !== 1 //第一次调用 以参数个数判断
 }
 
 // Used by whenMapStateToPropsIsFunction and whenMapDispatchToPropsIsFunction,
@@ -49,12 +52,13 @@ export function wrapMapToPropsFunc(mapToProps, methodName) {
     // allow detectFactoryAndVerify to get ownProps
     proxy.dependsOnOwnProps = true
 
+    //第一次调用 将detectFactoryAndVerify 赋值 给 proxy.mapToProps， 以后调用则 使用传入的 mapToProps
     proxy.mapToProps = function detectFactoryAndVerify(
       stateOrDispatch,
       ownProps
     ) {
       proxy.mapToProps = mapToProps
-      proxy.dependsOnOwnProps = getDependsOnOwnProps(mapToProps)
+      proxy.dependsOnOwnProps = getDependsOnOwnProps(mapToProps) // 初始化时根据mapToProps来判断是否需要ownProps
       let props = proxy(stateOrDispatch, ownProps)
 
       if (typeof props === 'function') {
